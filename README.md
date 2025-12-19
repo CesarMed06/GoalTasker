@@ -1,4 +1,4 @@
-# ⚽ MiFutbolTask
+# ⚽ GoalTasker
 
 Aplicación web para gestionar tareas relacionadas con el fútbol (entrenamientos, partidos, objetivos...).
 
