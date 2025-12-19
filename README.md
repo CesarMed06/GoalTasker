@@ -4,10 +4,10 @@ Aplicación web para gestionar tareas relacionadas con el fútbol (entrenamiento
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **HTML5**: Estructura semántica.
-- **CSS**: Diseño responsive con Flexbox/Grid.
-- **JavaScript**: Lógica y manipulación del DOM.
-- **LocalStorage**: Persistencia de datos.
+- **HTML**: estructura semántica.
+- **CSS**: diseño responsive con Flexbox/Grid.
+- **JavaScript**: lógica y manipulación del DOM.
+- **LocalStorage**: persistencia de datos.
 
 ## 📦 Estructura del Proyecto
 
