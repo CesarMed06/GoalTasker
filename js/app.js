@@ -40,7 +40,7 @@ function renderTasks() {
             
             li.innerHTML = `
                 <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                       onchange="toggleTask(${tasks.indexOf(task)})">
+                    onchange="toggleTask(${tasks.indexOf(task)})">
                 <span class="task-text">${task.text}</span>
                 <button class="btn-delete" onclick="deleteTask(${tasks.indexOf(task)})">
                     <i class="fas fa-trash"></i>
