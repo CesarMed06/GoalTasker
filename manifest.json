@@ -1,0 +1,16 @@
+{
+  "name": "GoalTasker",
+  "short_name": "GoalTasker",
+  "description": "Organiza tus metas futbolísticas",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#eef7f0",
+  "theme_color": "#00a86b",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

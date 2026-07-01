@@ -25,7 +25,11 @@ const i18n = {
         exportSuccess: 'Tareas exportadas',
         importSuccess: 'Tareas importadas',
         importError: 'Archivo no válido',
-        importConfirm: '¿Sobrescribir con {n} tareas?'
+        importConfirm: '¿Sobrescribir con {n} tareas?',
+        taskAdded: 'Tarea añadida',
+        confirmTitle: 'Confirmar',
+        confirmYes: 'Sí',
+        confirmNo: 'No'
     },
     en: {
         progress: 'Progress',
@@ -53,9 +57,28 @@ const i18n = {
         exportSuccess: 'Tasks exported',
         importSuccess: 'Tasks imported',
         importError: 'Invalid file',
-        importConfirm: 'Overwrite with {n} tasks?'
+        importConfirm: 'Overwrite with {n} tasks?',
+        taskAdded: 'Task added',
+        confirmTitle: 'Confirm',
+        confirmYes: 'Yes',
+        confirmNo: 'No'
     }
 };
+
+const CATEGORIES = [
+    { value: 'entreno', emoji: '🏋️', es: 'Entreno', en: 'Training' },
+    { value: 'partido', emoji: '⚽', es: 'Partido', en: 'Match' },
+    { value: 'tactica', emoji: '📋', es: 'Táctica', en: 'Tactics' },
+    { value: 'fisico', emoji: '💪', es: 'Físico', en: 'Physical' },
+    { value: 'nutricion', emoji: '🥗', es: 'Nutrición', en: 'Nutrition' },
+    { value: 'otro', emoji: '📌', es: 'Otro', en: 'Other' }
+];
+
+const PRIORITIES = [
+    { value: 'alta', emoji: '🔴', es: 'Alta', en: 'High' },
+    { value: 'media', emoji: '🟡', es: 'Media', en: 'Medium' },
+    { value: 'baja', emoji: '🟢', es: 'Baja', en: 'Low' }
+];
 
 let lang = localStorage.getItem('lang') || 'es';
 let theme = localStorage.getItem('theme') || 'light';
@@ -64,6 +87,8 @@ let currentFilter = 'all';
 let searchQuery = '';
 let deletedTask = null;
 let editingId = null;
+let dragSrcId = null;
+let confirmCallback = null;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -97,23 +122,15 @@ function setLang(l) {
 }
 
 function rebuildSelects() {
-    const cats = { entreno: '🏋️', partido: '⚽', tactica: '📋', fisico: '💪', nutricion: '🥗', otro: '📌' };
-    const catLabels = lang === 'es'
-        ? { entreno: 'Entreno', partido: 'Partido', tactica: 'Táctica', fisico: 'Físico', nutricion: 'Nutrición', otro: 'Otro' }
-        : { entreno: 'Training', partido: 'Match', tactica: 'Tactics', fisico: 'Physical', nutricion: 'Nutrition', otro: 'Other' };
-    const priLabels = lang === 'es'
-        ? { alta: 'Alta', media: 'Media', baja: 'Baja' }
-        : { alta: 'High', media: 'Medium', baja: 'Low' };
-
     ['#categorySelect', '#modalCategory'].forEach(sel => {
         const select = $(sel);
         if (!select) return;
         const saved = select.value;
         select.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
-        Object.entries(cats).forEach(([val, emoji]) => {
+        CATEGORIES.forEach(cat => {
             const opt = document.createElement('option');
-            opt.value = val;
-            opt.textContent = `${emoji} ${catLabels[val]}`;
+            opt.value = cat.value;
+            opt.textContent = `${cat.emoji} ${cat[lang]}`;
             select.appendChild(opt);
         });
         select.value = saved;
@@ -124,11 +141,10 @@ function rebuildSelects() {
         if (!select) return;
         const saved = select.value;
         select.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
-        ['alta', 'media', 'baja'].forEach(val => {
+        PRIORITIES.forEach(pri => {
             const opt = document.createElement('option');
-            opt.value = val;
-            const emoji = val === 'alta' ? '🔴' : val === 'media' ? '🟡' : '🟢';
-            opt.textContent = `${emoji} ${priLabels[val]}`;
+            opt.value = pri.value;
+            opt.textContent = `${pri.emoji} ${pri[lang]}`;
             select.appendChild(opt);
         });
         select.value = saved;
@@ -203,7 +219,7 @@ function updateTask(id, data) {
 function openEditModal(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-
+    editingId = id;
     $('#modalText').value = task.text;
     $('#modalCategory').value = task.category || '';
     $('#modalPriority').value = task.priority || '';
@@ -222,6 +238,24 @@ function closeEditModal() {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     delete modal.dataset.editId;
+    editingId = null;
+}
+
+function showConfirm(msg, onConfirm) {
+    $('#confirmMsg').textContent = msg;
+    confirmCallback = onConfirm;
+    const modal = $('#confirmModal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    $('#confirmYes').focus();
+}
+
+function closeConfirm(confirmed) {
+    const modal = $('#confirmModal');
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (confirmed && confirmCallback) confirmCallback();
+    confirmCallback = null;
 }
 
 function saveEditModal() {
@@ -275,13 +309,13 @@ function isOverdue(dateStr) {
 }
 
 function categoryLabel(cat) {
-    const map = { entreno: '🏋️', partido: '⚽', tactica: '📋', fisico: '💪', nutricion: '🥗', otro: '📌' };
-    return map[cat] || cat;
+    const found = CATEGORIES.find(c => c.value === cat);
+    return found ? found.emoji : cat;
 }
 
 function priorityLabel(pri) {
-    const map = { alta: '🔴', media: '🟡', baja: '🟢' };
-    return map[pri] || pri;
+    const found = PRIORITIES.find(p => p.value === pri);
+    return found ? found.emoji : pri;
 }
 
 function buildTaskHTML(task) {
@@ -307,8 +341,8 @@ function buildTaskHTML(task) {
             ${badges ? `<div class="task-meta">${badges}</div>` : ''}
         </div>
         <div class="task-actions">
-            <button class="task-btn edit" aria-label="Editar tarea"><i class="fas fa-pen"></i></button>
-            <button class="task-btn delete" aria-label="Eliminar tarea"><i class="fas fa-trash"></i></button>
+            <button class="task-btn edit" aria-label="${t('editTask')}: ${task.text}"><i class="fas fa-pen"></i></button>
+            <button class="task-btn delete" aria-label="${t('deleted')}: ${task.text}"><i class="fas fa-trash"></i></button>
         </div>
     `;
 }
@@ -334,6 +368,7 @@ function renderTasks() {
             const li = document.createElement('li');
             li.className = 'task-item' + (task.completed ? ' completed' : '');
             li.dataset.id = task.id;
+            li.setAttribute('draggable', 'true');
             li.innerHTML = buildTaskHTML(task);
             list.appendChild(li);
         });
@@ -393,19 +428,20 @@ function importTasks(file) {
             if (!Array.isArray(data)) throw new Error();
             const valid = data.filter(t => t && typeof t.text === 'string' && t.text.trim());
             if (!valid.length) throw new Error();
-            if (!confirm(t('importConfirm').replace('{n}', valid.length))) return;
-            tasks = valid.map(t => ({
-                id: t.id || Date.now() + Math.random(),
-                text: t.text.trim(),
-                completed: !!t.completed,
-                category: t.category || '',
-                priority: t.priority || '',
-                dueDate: t.dueDate || '',
-                createdAt: t.createdAt || new Date().toISOString()
-            }));
-            save();
-            renderAll();
-            showToast(t('importSuccess'));
+            showConfirm(t('importConfirm').replace('{n}', valid.length), () => {
+                tasks = valid.map(t => ({
+                    id: t.id || Date.now() + Math.random(),
+                    text: t.text.trim(),
+                    completed: !!t.completed,
+                    category: t.category || '',
+                    priority: t.priority || '',
+                    dueDate: t.dueDate || '',
+                    createdAt: t.createdAt || new Date().toISOString()
+                }));
+                save();
+                renderAll();
+                showToast(t('importSuccess'));
+            });
         } catch {
             showToast(t('importError'));
         }
@@ -490,6 +526,7 @@ function setupEvents() {
         $('#dueDate').value = '';
         $('#taskInput').focus();
         renderAll();
+        showToast(t('taskAdded'));
     });
 
     $$('.filter-btn').forEach(btn => {
@@ -546,8 +583,55 @@ function setupEvents() {
     $('#importBtn').addEventListener('click', () => $('#importFile').click());
 
     $('#importFile').addEventListener('change', e => {
-        if (e.target.files[0]) importTasks(e.target.files[0]);
-        e.target.value = '';
+        if (e.target.files[0]) {
+            importTasks(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+
+    $('#taskList').addEventListener('dragstart', e => {
+        if (currentFilter !== 'all' || searchQuery) return;
+        const item = e.target.closest('.task-item');
+        if (!item) return;
+        dragSrcId = Number(item.dataset.id);
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    });
+
+    $('#taskList').addEventListener('dragover', e => {
+        if (currentFilter !== 'all' || searchQuery) return;
+        e.preventDefault();
+        const item = e.target.closest('.task-item');
+        if (!item || Number(item.dataset.id) === dragSrcId) return;
+        $$('.task-item').forEach(el => el.classList.remove('drag-over'));
+        item.classList.add('drag-over');
+    });
+
+    $('#taskList').addEventListener('dragleave', e => {
+        const item = e.target.closest('.task-item');
+        if (item) item.classList.remove('drag-over');
+    });
+
+    $('#taskList').addEventListener('drop', e => {
+        if (currentFilter !== 'all' || searchQuery) return;
+        e.preventDefault();
+        const item = e.target.closest('.task-item');
+        if (!item) return;
+        item.classList.remove('drag-over');
+        const targetId = Number(item.dataset.id);
+        if (!targetId || targetId === dragSrcId || !dragSrcId) return;
+        const srcIdx = tasks.findIndex(t => t.id === dragSrcId);
+        const targetIdx = tasks.findIndex(t => t.id === targetId);
+        if (srcIdx === -1 || targetIdx === -1) return;
+        const [moved] = tasks.splice(srcIdx, 1);
+        tasks.splice(targetIdx, 0, moved);
+        save();
+        renderAll();
+    });
+
+    $('#taskList').addEventListener('dragend', () => {
+        $$('.task-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+        dragSrcId = null;
     });
 
     $('#langToggle').addEventListener('click', () => {
@@ -573,14 +657,29 @@ function setupEvents() {
         }
     });
 
+    $('#confirmYes').addEventListener('click', () => closeConfirm(true));
+    $('#confirmNo').addEventListener('click', () => closeConfirm(false));
+
+    $('#confirmModal').addEventListener('click', e => {
+        if (e.target === $('#confirmModal')) closeConfirm(false);
+    });
+
+    $('#confirmModal').addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeConfirm(false);
+    });
+
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             $('#searchInput').focus();
         }
         if (e.key === 'Escape') {
-            const modal = $('#editModal');
-            if (modal.classList.contains('open')) {
+            const confirmModal = $('#confirmModal');
+            if (confirmModal && confirmModal.classList.contains('open')) {
+                closeConfirm(false);
+                return;
+            }
+            if ($('#editModal').classList.contains('open')) {
                 closeEditModal();
                 return;
             }
@@ -603,6 +702,9 @@ function init() {
     setupEvents();
     renderAll();
     $('#taskInput').focus();
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);

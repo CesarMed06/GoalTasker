@@ -349,6 +349,26 @@ body::before {
     color: var(--text);
 }
 
+.search-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    margin-left: 4px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    display: none;
+}
+
+@media (min-width: 601px) {
+    .search-hint {
+        display: inline;
+    }
+}
+
 .filters {
     display: flex;
     gap: 8px;
@@ -481,7 +501,20 @@ body::before {
 
 .task-item.completed .task-text {
     text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--c-green);
     color: var(--text-muted);
+}
+
+.task-item.dragging {
+    opacity: .4;
+    transform: scale(.97);
+}
+
+.task-item.drag-over {
+    border-color: var(--c-green);
+    border-style: dashed;
+    background: var(--bg-hover);
 }
 
 .task-meta {
@@ -772,6 +805,25 @@ body::before {
     outline-offset: 2px;
 }
 
+.confirm-modal {
+    max-width: 360px;
+}
+
+.confirm-modal .modal-body {
+    text-align: center;
+    padding: 28px 24px 20px;
+}
+
+.confirm-modal .modal-body p {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.confirm-modal .modal-footer {
+    justify-content: center;
+}
+
 canvas#confetti {
     position: fixed;
     top: 0;
@@ -822,6 +874,17 @@ canvas#confetti {
 .footer-btn:focus-visible {
     outline: 2px solid var(--c-green);
     outline-offset: 2px;
+}
+
+.footer-link {
+    color: var(--c-green);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity .2s;
+}
+
+.footer-link:hover {
+    opacity: .7;
 }
 
 @media (max-width: 600px) {

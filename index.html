@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="GoalTasker - Organiza tus metas futbolísticas">
+    <meta property="og:title" content="GoalTasker">
+    <meta property="og:description" content="Organiza tus metas futbolísticas">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#00a86b">
     <title>GoalTasker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -84,6 +90,7 @@
                 <button class="search-clear" id="searchClear" aria-label="Limpiar búsqueda" style="display:none">
                     <i class="fas fa-times"></i>
                 </button>
+                <span class="search-hint">Ctrl+K</span>
             </div>
 
             <div class="filters">
@@ -121,11 +128,23 @@
                     <span data-i18n="import">Importar</span>
                 </button>
             </div>
-            <p>⚽ GoalTasker &mdash; <span id="currentYear"></span></p>
+            <p>⚽ GoalTasker &mdash; <span id="currentYear"></span> &mdash; <a href="https://github.com/CesarMed06/GoalTasker" target="_blank" rel="noopener" class="footer-link">GitHub</a></p>
         </footer>
         <input type="file" id="importFile" accept=".json" hidden>
 
         <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="modal-overlay" id="confirmModal" aria-hidden="true">
+            <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-label="Confirmar">
+                <div class="modal-body">
+                    <p id="confirmMsg"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" id="confirmNo" data-i18n="confirmNo">No</button>
+                    <button class="btn-save" id="confirmYes" data-i18n="confirmYes">Sí</button>
+                </div>
+            </div>
+        </div>
 
         <div class="modal-overlay" id="editModal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
